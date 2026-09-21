@@ -1,4 +1,4 @@
--- AskDrv admin panel — supplementary Supabase tables
+-- Sattilik admin panel — supplementary Supabase tables
 -- Run this in the Supabase SQL editor for the project referenced by
 -- NEXT_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_URL.
 

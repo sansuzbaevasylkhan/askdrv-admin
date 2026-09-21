@@ -38,7 +38,7 @@ export default async function DashboardPage() {
           title="Белсенді жүргізушілер"
           value={stats.activeDrivers}
           icon={Car}
-          description={`${stats.pendingDrivers} верификация күтуде`}
+          description={`${stats.blockedDrivers} бұғатталған`}
         />
         <StatCard
           title="Бүгінгі сапарлар"
@@ -67,6 +67,7 @@ export default async function DashboardPage() {
             <Button
               variant="ghost"
               size="sm"
+              nativeButton={false}
               render={<Link href="/admin/orders">Барлығы →</Link>}
             />
           </CardHeader>
@@ -94,11 +95,13 @@ export default async function DashboardPage() {
                       <TableCell>
                         <StatusBadge status={o.status} />
                       </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {o.passenger_id.slice(0, 8)}
+                      <TableCell className="text-xs">
+                        {o.passenger_first_name} {o.passenger_last_name}
                       </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {o.driver_id ? o.driver_id.slice(0, 8) : '—'}
+                      <TableCell className="text-xs">
+                        {o.driver_first_name
+                          ? `${o.driver_first_name} ${o.driver_last_name ?? ''}`
+                          : '—'}
                       </TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(o.price)}
@@ -121,7 +124,7 @@ export default async function DashboardPage() {
               Жаңа жүргізушілер
             </CardTitle>
             <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-400">
-              {stats.pendingDrivers} күтуде
+              {stats.blockedDrivers} бұғатталған
             </span>
           </CardHeader>
           <CardContent>
@@ -136,12 +139,12 @@ export default async function DashboardPage() {
                     className="flex items-center justify-between rounded-md border border-border p-3 transition-colors hover:bg-accent"
                   >
                     <div>
-                      <div className="font-medium">{d.full_name}</div>
+                      <div className="font-medium">{d.first_name} {d.last_name}</div>
                       <div className="text-xs text-muted-foreground">
                         {d.phone}
                       </div>
                     </div>
-                    <StatusBadge status={d.status} />
+                    <StatusBadge status={d.is_blocked ? 'blocked' : 'active'} />
                   </Link>
                 ))
               )}

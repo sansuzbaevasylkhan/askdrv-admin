@@ -87,16 +87,17 @@ export function StatisticsView({ initialOrders }: Props) {
       revenue: byBucket.get(k)!.revenue,
     }))
 
-    const byDriver = new Map<string, { trips: number; revenue: number }>()
+    const byDriver = new Map<string, { name: string; trips: number; revenue: number }>()
     for (const o of completed) {
-      if (!o.driver_id) continue
-      const cur = byDriver.get(o.driver_id) ?? { trips: 0, revenue: 0 }
+      if (!o.driver_phone) continue
+      const name = `${o.driver_first_name ?? ''} ${o.driver_last_name ?? ''}`.trim()
+      const cur = byDriver.get(o.driver_phone) ?? { name, trips: 0, revenue: 0 }
       cur.trips += 1
       cur.revenue += o.price ?? 0
-      byDriver.set(o.driver_id, cur)
+      byDriver.set(o.driver_phone, cur)
     }
     const topDrivers = Array.from(byDriver.entries())
-      .map(([id, v]) => ({ id, ...v }))
+      .map(([phone, v]) => ({ phone, ...v }))
       .sort((a, b) => b.trips - a.trips)
       .slice(0, 5)
 
@@ -176,7 +177,7 @@ export function StatisticsView({ initialOrders }: Props) {
                       border: '1px solid #27272a',
                       borderRadius: 6,
                     }}
-                    formatter={(v: number) => formatCurrency(v)}
+                    formatter={(v) => formatCurrency(Number(Array.isArray(v) ? v[0] : v) || 0)}
                   />
                   <Bar dataKey="revenue" fill={COLORS.bar} radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -209,9 +210,9 @@ export function StatisticsView({ initialOrders }: Props) {
                 </TableRow>
               ) : (
                 topDrivers.map((d, i) => (
-                  <TableRow key={d.id}>
+                  <TableRow key={d.phone}>
                     <TableCell>{i + 1}</TableCell>
-                    <TableCell className="font-mono text-xs">{d.id.slice(0, 8)}</TableCell>
+                    <TableCell className="text-xs">{d.name || d.phone}</TableCell>
                     <TableCell className="text-right">{d.trips}</TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(d.revenue)}

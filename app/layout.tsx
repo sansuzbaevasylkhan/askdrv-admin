@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AskDrv Admin",
-  description: "AskDrv admin panel",
+  title: "Sattilik Admin",
+  description: "Sattilik admin panel",
 };
 
 export default function RootLayout({

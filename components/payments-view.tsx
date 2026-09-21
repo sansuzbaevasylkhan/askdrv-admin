@@ -126,8 +126,8 @@ export function PaymentsView({ initialPayments, initialCommission }: Props) {
                 ) : (
                   payments.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="font-mono text-xs">
-                        {p.driver_id.slice(0, 8)}
+                      <TableCell className="text-xs">
+                        {p.driver_name ?? p.driver_phone ?? p.driver_id.slice(0, 8)}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {formatDateOnly(p.period_start)} — {formatDateOnly(p.period_end)}

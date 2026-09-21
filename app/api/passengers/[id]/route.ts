@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server'
-import { setUserBlocked } from '@/lib/queries'
+import { deleteUser } from '@/lib/queries'
 
-export async function POST(
-  req: Request,
+export async function DELETE(
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const body = (await req.json()) as { blocked?: boolean }
-  if (typeof body.blocked !== 'boolean') {
-    return NextResponse.json({ error: 'blocked required' }, { status: 400 })
-  }
   try {
-    await setUserBlocked(id, body.blocked)
+    await deleteUser(id)
     return NextResponse.json({ ok: true })
   } catch (err) {
     return NextResponse.json(

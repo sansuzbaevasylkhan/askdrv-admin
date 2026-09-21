@@ -127,11 +127,21 @@ export function OrdersTable({ initialOrders }: Props) {
                   <TableCell className="font-mono text-xs">
                     {o.id.slice(0, 8)}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {o.passenger_id.slice(0, 8)}
+                  <TableCell className="text-sm">
+                    {o.passenger_first_name} {o.passenger_last_name}
+                    <div className="font-mono text-xs text-muted-foreground">
+                      {o.passenger_phone}
+                    </div>
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {o.driver_id ? o.driver_id.slice(0, 8) : '—'}
+                  <TableCell className="text-sm">
+                    {o.driver_first_name
+                      ? `${o.driver_first_name} ${o.driver_last_name ?? ''}`
+                      : '—'}
+                    {o.driver_phone ? (
+                      <div className="font-mono text-xs text-muted-foreground">
+                        {o.driver_phone}
+                      </div>
+                    ) : null}
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">{o.pickup_address}</div>

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Phone, Car, Star, FileText, MapPin } from 'lucide-react'
+import { ArrowLeft, Phone, Car, Star, MapPin } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,31 +32,33 @@ export default async function DriverDetailPage({
   const driver = await getDriver(id)
   if (!driver) notFound()
 
-  const driverOrders = (await getOrders()).filter((o) => o.driver_id === id)
+  const driverOrders = (await getOrders()).filter(
+    (o) => o.driver_phone === driver.phone
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon">
           <Link href="/admin/drivers">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{driver.full_name}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {driver.first_name} {driver.last_name}
+          </h1>
           <p className="text-sm text-muted-foreground">Жүргізуші профилі</p>
         </div>
         <div className="ml-auto">
-          <StatusBadge status={driver.status} />
+          <StatusBadge status={driver.is_blocked ? 'blocked' : 'active'} />
         </div>
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
           <TabsTrigger value="profile">Профиль</TabsTrigger>
-          <TabsTrigger value="documents">Құжаттар</TabsTrigger>
           <TabsTrigger value="trips">Сапарлар тарихы</TabsTrigger>
-          <TabsTrigger value="bank">Банк</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -76,9 +78,9 @@ export default async function DriverDetailPage({
                 <CardTitle className="text-sm">Машина</CardTitle>
               </CardHeader>
               <CardContent>
-                <p>{driver.car_brand ?? '—'} {driver.car_model ?? ''}</p>
+                <p>{driver.car_name ?? '—'}</p>
                 <p className="font-mono text-sm text-muted-foreground">
-                  {driver.car_number ?? '—'}
+                  {driver.car_number ?? '—'} {driver.car_color ? `· ${driver.car_color}` : ''}
                 </p>
               </CardContent>
             </Card>
@@ -89,10 +91,10 @@ export default async function DriverDetailPage({
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">
-                  {driver.rating != null ? driver.rating.toFixed(1) : '—'}
+                  {driver.average_rating != null ? driver.average_rating.toFixed(1) : '—'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {driver.total_trips} сапар
+                  {driver.total_trips ?? 0} сапар · {driver.reviews_count ?? 0} пікір
                 </p>
               </CardContent>
             </Card>
@@ -103,35 +105,6 @@ export default async function DriverDetailPage({
             </CardHeader>
             <CardContent>
               <p>{formatDate(driver.created_at)}</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="documents">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Жүктелген құжаттар
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {driver.documents && driver.documents.length > 0 ? (
-                <ul className="space-y-2">
-                  {driver.documents.map((doc, i) => (
-                    <li
-                      key={i}
-                      className="rounded-md border border-border p-3 text-sm"
-                    >
-                      {doc}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Құжаттар жүктелмеген
-                </p>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -184,19 +157,6 @@ export default async function DriverDetailPage({
                   )}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="bank">
-          <Card>
-            <CardHeader>
-              <CardTitle>Банктік реквизиттер</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="rounded-md border border-border bg-muted/30 p-4 text-sm whitespace-pre-wrap">
-                {driver.bank_details ?? 'Реквизиттер көрсетілмеген'}
-              </pre>
             </CardContent>
           </Card>
         </TabsContent>

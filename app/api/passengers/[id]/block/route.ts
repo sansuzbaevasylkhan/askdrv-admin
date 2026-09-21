@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { setPassengerBlocked } from '@/lib/queries'
+import { setUserBlocked as setPassengerBlocked } from '@/lib/queries'
 
 export async function POST(
   req: Request,

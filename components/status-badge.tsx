@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
-import type { OrderStatus, DriverStatus, PaymentStatus } from '@/lib/types'
+import type { OrderStatus, PaymentStatus } from '@/lib/types'
 
-type Status = OrderStatus | DriverStatus | PaymentStatus | string
+type Status = OrderStatus | PaymentStatus | 'active' | 'blocked' | string
 
 const STYLES: Record<string, string> = {
   active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',

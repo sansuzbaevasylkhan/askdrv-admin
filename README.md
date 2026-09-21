@@ -1,6 +1,6 @@
-# AskDrv Admin
+# Sattilik Admin
 
-Next.js admin panel for the AskDrv platform (drivers, orders, payouts, dashboard).
+Next.js admin panel for the Sattilik platform (drivers, orders, payouts, dashboard).
 
 ## Tech stack
 

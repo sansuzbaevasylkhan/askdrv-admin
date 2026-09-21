@@ -1,9 +1,8 @@
-// Shared database types.
-// NOTE: Column names are best-effort guesses based on typical ride-hailing
-// schemas. If your Supabase tables use different names, update them here and
-// the queries will compile/type-check again.
+// Types mirror the real Supabase schema shared with the Sattilik mobile app
+// (see askdrv-taxi-app/supabase/migrations). Both driver and passenger
+// accounts live in one `users` table, distinguished by `role`.
 
-export type DriverStatus = 'active' | 'pending' | 'blocked' | 'inactive'
+export type UserRole = 'passenger' | 'driver'
 export type OrderStatus =
   | 'pending'
   | 'accepted'
@@ -12,51 +11,54 @@ export type OrderStatus =
   | 'cancelled'
 export type PaymentStatus = 'pending' | 'paid' | 'failed'
 
-export interface Driver {
+export interface AppUser {
   id: string
-  full_name: string
   phone: string
-  car_brand: string | null
-  car_model: string | null
-  car_number: string | null
-  status: DriverStatus
-  rating: number | null
-  total_trips: number
-  is_verified: boolean
+  first_name: string
+  last_name: string
+  role: UserRole
   avatar_url: string | null
-  bank_details: string | null
-  documents: string[] | null
-  created_at: string
-}
-
-export interface Passenger {
-  id: string
-  full_name: string
-  phone: string
-  total_trips: number
-  total_spent: number
+  car_name: string | null
+  car_number: string | null
+  car_color: string | null
+  average_rating: number | null
+  reviews_count: number | null
   is_blocked: boolean
   created_at: string
+  // Computed client-side from orders, not a real column.
+  total_trips?: number
+  total_spent?: number
 }
 
 export interface Order {
   id: string
-  passenger_id: string
-  driver_id: string | null
+  passenger_phone: string
+  passenger_first_name: string
+  passenger_last_name: string
+  driver_phone: string | null
+  driver_first_name: string | null
+  driver_last_name: string | null
   pickup_address: string
   dropoff_address: string
-  status: OrderStatus
+  distance: string
+  estimated_time: string
   price: number
+  status: OrderStatus
+  payment_method: string | null
+  passenger_reviewed: boolean
   created_at: string
-  completed_at: string | null
-  // Optional realtime location data
+  updated_at: string
+  // Optional realtime location data (not populated by the app today).
   driver_lat?: number | null
   driver_lng?: number | null
 }
 
+// Admin-only supplemental tables (see sql/admin-supplemental.sql).
 export interface Payment {
   id: string
   driver_id: string
+  driver_name?: string
+  driver_phone?: string
   period_start: string
   period_end: string
   total_trips: number

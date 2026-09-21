@@ -33,13 +33,13 @@ export function Sidebar() {
         <div className="relative h-8 w-8 overflow-hidden rounded-lg">
           <Image
             src="/logo.png"
-            alt="AskDrv"
+            alt="Sattilik"
             fill
             sizes="32px"
             className="object-contain"
           />
         </div>
-        <span className="text-lg font-semibold tracking-tight">AskDrv</span>
+        <span className="text-lg font-semibold tracking-tight">Sattilik</span>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {NAV.map((item) => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -21,53 +21,69 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/status-badge'
-import type { Driver, DriverStatus } from '@/lib/types'
+import type { AppUser } from '@/lib/types'
 
 interface Props {
-  initialDrivers: Driver[]
+  initialDrivers: AppUser[]
 }
 
-const STATUS_OPTIONS: { value: 'all' | DriverStatus; label: string }[] = [
+const STATUS_OPTIONS = [
   { value: 'all', label: 'Барлығы' },
   { value: 'active', label: 'Белсенді' },
-  { value: 'pending', label: 'Күтуде' },
   { value: 'blocked', label: 'Бұғатталған' },
-  { value: 'inactive', label: 'Белсенді емес' },
-]
+] as const
 
 export function DriversTable({ initialDrivers }: Props) {
   const [drivers, setDrivers] = useState(initialDrivers)
   const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<'all' | DriverStatus>('all')
+  const [status, setStatus] = useState<(typeof STATUS_OPTIONS)[number]['value']>('all')
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return drivers.filter((d) => {
-      if (status !== 'all' && d.status !== status) return false
+      if (status === 'active' && d.is_blocked) return false
+      if (status === 'blocked' && !d.is_blocked) return false
       if (!q) return true
+      const fullName = `${d.first_name} ${d.last_name}`.toLowerCase()
       return (
-        d.full_name.toLowerCase().includes(q) ||
+        fullName.includes(q) ||
         d.phone.toLowerCase().includes(q) ||
-        (d.car_brand ?? '').toLowerCase().includes(q) ||
+        (d.car_name ?? '').toLowerCase().includes(q) ||
         (d.car_number ?? '').toLowerCase().includes(q)
       )
     })
   }, [drivers, query, status])
 
-  async function toggleBlock(d: Driver) {
+  async function toggleBlock(d: AppUser) {
     setBusyId(d.id)
-    const nextStatus: DriverStatus = d.status === 'blocked' ? 'active' : 'blocked'
+    const nextBlocked = !d.is_blocked
     try {
       const res = await fetch(`/api/drivers/${d.id}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({ blocked: nextBlocked }),
       })
       if (res.ok) {
         setDrivers((prev) =>
-          prev.map((x) => (x.id === d.id ? { ...x, status: nextStatus } : x))
+          prev.map((x) => (x.id === d.id ? { ...x, is_blocked: nextBlocked } : x))
         )
+      }
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function deleteDriver(d: AppUser) {
+    const fullName = `${d.first_name} ${d.last_name}`.trim() || d.phone
+    if (!window.confirm(`${fullName} аккаунтын толығымен жою керек пе? Бұл әрекетті кері қайтару мүмкін емес.`)) {
+      return
+    }
+    setBusyId(d.id)
+    try {
+      const res = await fetch(`/api/drivers/${d.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setDrivers((prev) => prev.filter((x) => x.id !== d.id))
       }
     } finally {
       setBusyId(null)
@@ -86,7 +102,7 @@ export function DriversTable({ initialDrivers }: Props) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <Select value={status} onValueChange={(v) => setStatus(v as 'all' | DriverStatus)}>
+        <Select value={status} onValueChange={(v) => setStatus(v as typeof status)}>
           <SelectTrigger className="sm:w-48">
             <SelectValue />
           </SelectTrigger>
@@ -128,34 +144,42 @@ export function DriversTable({ initialDrivers }: Props) {
                       href={`/admin/drivers/${d.id}`}
                       className="font-medium hover:underline"
                     >
-                      {d.full_name}
+                      {d.first_name} {d.last_name}
                     </Link>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{d.phone}</TableCell>
                   <TableCell>
-                    <div className="text-sm">
-                      {d.car_brand ?? '—'} {d.car_model ?? ''}
-                    </div>
+                    <div className="text-sm">{d.car_name ?? '—'}</div>
                     <div className="font-mono text-xs text-muted-foreground">
                       {d.car_number ?? '—'}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={d.status} />
+                    <StatusBadge status={d.is_blocked ? 'blocked' : 'active'} />
                   </TableCell>
                   <TableCell className="text-right">
-                    {d.rating != null ? d.rating.toFixed(1) : '—'}
+                    {d.average_rating != null ? d.average_rating.toFixed(1) : '—'}
                   </TableCell>
-                  <TableCell className="text-right">{d.total_trips}</TableCell>
+                  <TableCell className="text-right">{d.total_trips ?? 0}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant={d.status === 'blocked' ? 'outline' : 'destructive'}
-                      disabled={busyId === d.id}
-                      onClick={() => toggleBlock(d)}
-                    >
-                      {d.status === 'blocked' ? 'Белсендіру' : 'Бұғаттау'}
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant={d.is_blocked ? 'outline' : 'destructive'}
+                        disabled={busyId === d.id}
+                        onClick={() => toggleBlock(d)}
+                      >
+                        {d.is_blocked ? 'Белсендіру' : 'Бұғаттау'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={busyId === d.id}
+                        onClick={() => deleteDriver(d)}
+                      >
+                        Жою
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

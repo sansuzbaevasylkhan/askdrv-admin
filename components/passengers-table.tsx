@@ -13,10 +13,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatCurrency, formatDateOnly } from '@/lib/format'
-import type { Passenger } from '@/lib/types'
+import type { AppUser } from '@/lib/types'
 
 interface Props {
-  initialPassengers: Passenger[]
+  initialPassengers: AppUser[]
 }
 
 export function PassengersTable({ initialPassengers }: Props) {
@@ -27,27 +27,41 @@ export function PassengersTable({ initialPassengers }: Props) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return passengers
-    return passengers.filter(
-      (p) =>
-        p.full_name.toLowerCase().includes(q) ||
-        p.phone.toLowerCase().includes(q)
-    )
+    return passengers.filter((p) => {
+      const fullName = `${p.first_name} ${p.last_name}`.toLowerCase()
+      return fullName.includes(q) || p.phone.toLowerCase().includes(q)
+    })
   }, [passengers, query])
 
-  async function toggleBlock(p: Passenger) {
+  async function toggleBlock(p: AppUser) {
     setBusyId(p.id)
+    const nextBlocked = !p.is_blocked
     try {
       const res = await fetch(`/api/passengers/${p.id}/block`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blocked: !p.is_blocked }),
+        body: JSON.stringify({ blocked: nextBlocked }),
       })
       if (res.ok) {
         setPassengers((prev) =>
-          prev.map((x) =>
-            x.id === p.id ? { ...x, is_blocked: !p.is_blocked } : x
-          )
+          prev.map((x) => (x.id === p.id ? { ...x, is_blocked: nextBlocked } : x))
         )
+      }
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function deletePassenger(p: AppUser) {
+    const fullName = `${p.first_name} ${p.last_name}`.trim() || p.phone
+    if (!window.confirm(`${fullName} аккаунтын толығымен жою керек пе? Бұл әрекетті кері қайтару мүмкін емес.`)) {
+      return
+    }
+    setBusyId(p.id)
+    try {
+      const res = await fetch(`/api/passengers/${p.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setPassengers((prev) => prev.filter((x) => x.id !== p.id))
       }
     } finally {
       setBusyId(null)
@@ -88,24 +102,36 @@ export function PassengersTable({ initialPassengers }: Props) {
             ) : (
               filtered.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.full_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {p.first_name} {p.last_name}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{p.phone}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {formatDateOnly(p.created_at)}
                   </TableCell>
-                  <TableCell className="text-right">{p.total_trips}</TableCell>
+                  <TableCell className="text-right">{p.total_trips ?? 0}</TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(p.total_spent)}
+                    {formatCurrency(p.total_spent ?? 0)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant={p.is_blocked ? 'outline' : 'destructive'}
-                      disabled={busyId === p.id}
-                      onClick={() => toggleBlock(p)}
-                    >
-                      {p.is_blocked ? 'Белсендіру' : 'Бұғаттау'}
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant={p.is_blocked ? 'outline' : 'destructive'}
+                        disabled={busyId === p.id}
+                        onClick={() => toggleBlock(p)}
+                      >
+                        {p.is_blocked ? 'Белсендіру' : 'Бұғаттау'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={busyId === p.id}
+                        onClick={() => deletePassenger(p)}
+                      >
+                        Жою
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
